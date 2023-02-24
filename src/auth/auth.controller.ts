@@ -1,9 +1,9 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { User } from '../users/user.entity';
-import { ApiBody,ApiProperty,ApiTags } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiBearerAuth, ApiBody, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 
 
 class LoginDto {
@@ -28,8 +28,21 @@ class RegisterDto {
     @ApiProperty()
     password: string;
 }
+class UserDto {
+    @IsString()
+    @ApiProperty()
+    email: string;
 
+    @IsString()
+    @ApiProperty()
+    subscription: string;
 
+    @IsBoolean()
+    @ApiProperty()
+    isActive: boolean;
+}
+
+// Fri Feb 24 2023 15:42:29 GMT+0100 (West Africa Standard Time)
 @ApiTags('Authentication')
 @Controller()
 export class AuthController {
@@ -44,9 +57,22 @@ export class AuthController {
     @UseGuards(AuthGuard('local'))
     @Post('login')
     async login(@Request() req): Promise<{ access_token: string }> {
-        const user = req.user;
+        const user = req.userObj;
         return {
             access_token: await this.authService.generateToken(user),
         };
     }
+
+    @Get('me')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
+    async me(@Request() req): Promise<User> {
+        const user: User = req.userObj;
+
+        debugger;
+
+        return user;
+    }
+
+
 }
